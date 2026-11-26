@@ -1,0 +1,25 @@
+# Credenciais e configurações locais
+.env
+.claude/
+
+# Perfis do Chrome (contêm cookies e senhas salvas)
+perfil*/
+
+# Dados e saídas da empresa (planilhas baixadas e HTMLs gerados com dados)
+downloads/
+hub/hub.html
+hub/hub_automacoes.html
+painel/painel.html
+
+# Logs e capturas de tela de erro
+*.log
+*.png
+*.pma
+
+# Ambiente virtual do Python
+venv/
+.venv/
+
+# Cache do Python
+__pycache__/
+*.pyc

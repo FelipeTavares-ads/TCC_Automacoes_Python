@@ -1,0 +1,642 @@
+<title>Hub de Automações</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700&family=Poppins:wght@500;600;700&family=JetBrains+Mono:wght@400&display=swap" rel="stylesheet">
+<style>
+  /* Layout: coluna única, três passos numerados; campos aparecem só quando o indicador marcado os usa. */
+  :root {
+    --bg: #f3f6f2;
+    --surface: #ffffff;
+    --fg: #14231b;
+    --muted: #55665b;
+    --line: #d6dfd8;
+    --accent: #0e6b49;
+    --accent-fg: #ffffff;
+    --accent-soft: #e2f1ea;
+    --warn: #8f5200;
+    --warn-soft: #fbefd9;
+    --err: #b3261e;
+    --err-soft: #fbe6e4;
+    --font-display: "Poppins", "Segoe UI", system-ui, sans-serif;
+    --font-body: "Nunito Sans", "Segoe UI", system-ui, sans-serif;
+    --font-mono: "JetBrains Mono", Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0d1713;
+      --surface: #14231c;
+      --fg: #e5eee8;
+      --muted: #94a89c;
+      --line: #263a2f;
+      --accent: #46c590;
+      --accent-fg: #06261a;
+      --accent-soft: #173a2b;
+      --warn: #f0b45a;
+      --warn-soft: #3a2a10;
+      --err: #ff8a80;
+      --err-soft: #3d1a17;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0d1713;
+    --surface: #14231c;
+    --fg: #e5eee8;
+    --muted: #94a89c;
+    --line: #263a2f;
+    --accent: #46c590;
+    --accent-fg: #06261a;
+    --accent-soft: #173a2b;
+    --warn: #f0b45a;
+    --warn-soft: #3a2a10;
+    --err: #ff8a80;
+    --err-soft: #3d1a17;
+    color-scheme: dark;
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    background: var(--bg);
+    color: var(--fg);
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 1.5;
+  }
+  .wrap {
+    max-width: 860px;
+    margin-inline: auto;
+    padding-inline: 16px;
+    padding-block: 32px 64px;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+  }
+  h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+  h1 { font-size: 1.9rem; line-height: 1.2; font-weight: 700; }
+  h2 { font-size: 1.15rem; font-weight: 600; }
+  h3 { font-size: 0.95rem; font-weight: 600; }
+  p { margin: 0; }
+  .lead { color: var(--muted); max-width: 62ch; }
+
+  header { display: flex; flex-direction: column; gap: 8px; padding-bottom: 4px; }
+  .eyebrow {
+    font-family: var(--font-display);
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--accent);
+    font-weight: 600;
+  }
+
+  .passo {
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    min-width: 0;
+  }
+  .passo-titulo { display: flex; align-items: center; gap: 12px; }
+  .passo-num {
+    flex: none;
+    width: 28px; height: 28px;
+    border-radius: 50%;
+    background: var(--accent);
+    color: var(--accent-fg);
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 0.9rem;
+    display: grid; place-items: center;
+  }
+  .dica { color: var(--muted); font-size: 0.9rem; }
+
+  .barra { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  button {
+    font: inherit;
+    cursor: pointer;
+  }
+  .btn-sec {
+    background: transparent;
+    color: var(--accent);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 0.88rem;
+    font-weight: 600;
+  }
+  .btn-sec:hover { background: var(--accent-soft); }
+  .btn-prim {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border: 0;
+    border-radius: 8px;
+    padding: 12px 22px;
+    font-family: var(--font-display);
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  .btn-prim:hover { filter: brightness(1.08); }
+  .btn-prim:disabled { opacity: 0.55; cursor: progress; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  .grupos { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .grupo { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+  .grupo h3 { color: var(--muted); font-size: 0.78rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    cursor: pointer;
+    min-width: 0;
+  }
+  .item:hover { border-color: var(--accent); }
+  .item:has(input:checked) { background: var(--accent-soft); border-color: var(--accent); }
+  .item input { margin-top: 4px; accent-color: var(--accent); width: 16px; height: 16px; flex: none; }
+  .item-texto { display: flex; flex-direction: column; min-width: 0; }
+  .item-nome { font-weight: 600; line-height: 1.3; }
+  .item-filtro { font-size: 0.8rem; color: var(--muted); }
+
+  .campos { display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); gap: 14px; }
+  label.campo { display: flex; flex-direction: column; gap: 4px; font-weight: 600; font-size: 0.9rem; min-width: 0; }
+  input[type="date"], input[type="number"], textarea, select {
+    font: inherit;
+    color: var(--fg);
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    padding: 8px 10px;
+    min-width: 0;
+    width: 100%;
+  }
+  textarea { min-height: 96px; resize: vertical; }
+  .bloco { display: flex; flex-direction: column; gap: 12px; padding-top: 4px; border-top: 1px dashed var(--line); }
+  .bloco[hidden] { display: none; }
+
+  .chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    padding: 3px 11px;
+    font-size: 0.82rem;
+    color: var(--fg);
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .radios { display: flex; flex-wrap: wrap; gap: 16px; }
+  .radios label { display: flex; gap: 6px; align-items: center; cursor: pointer; }
+  .radios input { accent-color: var(--accent); }
+
+  details summary { cursor: pointer; font-weight: 600; font-size: 0.9rem; color: var(--accent); }
+  .ers { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 10px; }
+  .ers label { display: flex; gap: 6px; align-items: center; font-family: var(--font-mono); font-size: 0.85rem; cursor: pointer; }
+  .ers input { accent-color: var(--accent); }
+
+  .resumo {
+    background: var(--accent-soft);
+    border-radius: 8px;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+  }
+  .avisos { display: flex; flex-direction: column; gap: 8px; }
+  .aviso { border-radius: 8px; padding: 10px 14px; font-size: 0.92rem; }
+  .aviso.erro { background: var(--err-soft); color: var(--err); }
+  .aviso.atencao { background: var(--warn-soft); color: var(--warn); }
+  .aviso.ok { background: var(--accent-soft); color: var(--accent); }
+  .acao { display: flex; flex-wrap: wrap; align-items: center; gap: 14px; }
+
+  ol.como { margin: 0; padding-left: 1.2rem; display: flex; flex-direction: column; gap: 6px; }
+  pre.json {
+    margin: 10px 0 0;
+    padding: 12px;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 0.8rem;
+    overflow-x: auto;
+  }
+  footer { color: var(--muted); font-size: 0.85rem; }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .item, .btn-sec, .chip { transition: background-color 0.12s, border-color 0.12s; }
+  }
+  @media (max-width: 480px) {
+    h1 { font-size: 1.5rem; }
+    .passo { padding: 16px; }
+  }
+</style>
+
+<div class="wrap">
+  <header>
+    <span class="eyebrow">Grupo Maria Selma</span>
+    <h1>Hub de Automações</h1>
+    <p class="lead">Escolha os indicadores e o período. O hub monta um pacote que baixa as planilhas no seu computador, sem precisar de terminal.</p>
+  </header>
+
+  <section class="passo" aria-labelledby="t1">
+    <div class="passo-titulo"><span class="passo-num" aria-hidden="true">1</span><h2 id="t1">O que você quer baixar?</h2></div>
+    <div class="barra">
+      <button type="button" class="btn-sec" id="marcar-todos">Marcar todos</button>
+      <button type="button" class="btn-sec" id="limpar-todos">Limpar</button>
+      <span class="dica">Embaixo de cada nome, o filtro que ele usa.</span>
+    </div>
+    <div class="grupos" id="grupos"></div>
+  </section>
+
+  <section class="passo" aria-labelledby="t2">
+    <div class="passo-titulo"><span class="passo-num" aria-hidden="true">2</span><h2 id="t2">Qual período?</h2></div>
+    <p class="dica" id="sem-filtros" hidden>Os indicadores marcados não usam filtro de período. Siga para o passo 3.</p>
+
+    <div class="bloco" id="bloco-periodo" hidden>
+      <h3>Período (datas)</h3>
+      <div class="barra" id="atalhos">
+        <button type="button" class="btn-sec" data-atalho="mes-passado">Mês passado</button>
+        <button type="button" class="btn-sec" data-atalho="mes-atual">Mês atual até hoje</button>
+        <button type="button" class="btn-sec" data-atalho="ano-ate-mes-passado">1º de janeiro até o fim do mês passado</button>
+        <button type="button" class="btn-sec" data-atalho="ano-ate-hoje">1º de janeiro até hoje</button>
+      </div>
+      <div class="campos">
+        <label class="campo" for="data-inicio">Data inicial
+          <input type="date" id="data-inicio">
+        </label>
+        <label class="campo" for="data-fim">Data final
+          <input type="date" id="data-fim">
+        </label>
+      </div>
+      <p class="dica" id="dica-periodo">Em branco, cada sistema usa o período que já vem selecionado nele (em geral, o mês atual).</p>
+    </div>
+
+    <div class="bloco" id="bloco-ciclo" hidden>
+      <h3>Ciclos (Venda Direta)</h3>
+      <div class="campos">
+        <label class="campo" for="ciclo-inicio">Do ciclo
+          <input type="number" id="ciclo-inicio" min="1" max="20" inputmode="numeric" placeholder="ciclo atual">
+        </label>
+        <label class="campo" for="ciclo-fim">Até o ciclo
+          <input type="number" id="ciclo-fim" min="1" max="20" inputmode="numeric" placeholder="igual ao inicial">
+        </label>
+      </div>
+      <p class="dica">Para um ciclo só, preencha apenas o primeiro. Para vários (ex.: 7 a 13), preencha os dois. Em branco, usa o ciclo atual.</p>
+      <details>
+        <summary>Escolher quais ERs baixar</summary>
+        <div class="ers" id="ers"></div>
+        <p class="dica" style="margin-top:8px">A visão geral (GMS) sempre vem. Menos ERs deixa a execução mais rápida.</p>
+      </details>
+    </div>
+
+    <div class="bloco" id="bloco-campanha" hidden>
+      <h3>Campanhas (Ação de Fluxo)</h3>
+      <div class="radios" role="radiogroup" aria-label="Campanhas">
+        <label><input type="radio" name="camp-modo" value="todas" checked> Todas (acumulado)</label>
+        <label><input type="radio" name="camp-modo" value="escolher"> Escolher campanhas</label>
+      </div>
+      <div id="camp-escolher" hidden>
+        <label class="campo" for="camp-texto">Uma campanha por linha, com o nome igual ao do site
+          <textarea id="camp-texto" spellcheck="false"></textarea>
+        </label>
+        <div class="chips" id="camp-chips" aria-label="Campanhas conhecidas"></div>
+        <p class="dica">Clique numa campanha para adicioná-la. Se uma campanha nova não estiver na lista, digite o nome.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="passo" aria-labelledby="t3">
+    <div class="passo-titulo"><span class="passo-num" aria-hidden="true">3</span><h2 id="t3">Baixar o pacote</h2></div>
+    <div class="resumo" id="resumo" aria-live="polite"></div>
+    <div class="avisos" id="avisos" aria-live="polite"></div>
+    <div class="acao">
+      <button type="button" class="btn-prim" id="baixar">Baixar pacote (.zip)</button>
+      <span class="dica" id="status" role="status"></span>
+    </div>
+    <details>
+      <summary>Ver a configuração que será enviada</summary>
+      <pre class="json" id="json-previa"></pre>
+    </details>
+  </section>
+
+  <section class="passo" aria-labelledby="t4">
+    <h2 id="t4">Depois de baixar</h2>
+    <ol class="como">
+      <li>Descompacte o zip (botão direito, Extrair tudo) numa pasta fixa, como Documentos.</li>
+      <li>Dê dois cliques em <strong>INICIAR.bat</strong>. Na primeira vez ele prepara o computador, o que leva alguns minutos. Não precisa abrir a pasta "programa".</li>
+      <li>Informe seu login da Extranet e do Medallia quando pedir. Fica salvo só neste computador.</li>
+      <li>O Chrome abre e baixa as planilhas sozinho. Não mexa nele. No fim, abre a pasta <strong>saida</strong> com as planilhas.</li>
+    </ol>
+    <p class="dica">Precisa de Windows e Google Chrome. Se algo der erro, envie o arquivo <strong>log.txt</strong> da subpasta mais recente de <strong>saida</strong> para quem mantém o hub.</p>
+  </section>
+
+  <footer>Os arquivos baixados e o login ficam no seu computador. Nada é enviado para este hub. Versão __VERSAO__.</footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script>
+  const ARQUIVOS = __ARQUIVOS_JSON__;
+
+  const CATALOGO = [
+    { grupo: "Satisfação e NPS (Medallia)", itens: [
+      { id: "medallia_nps", nome: "NPS por loja", filtro: "periodo" },
+      { id: "medallia_satisfacao", nome: "Satisfação do Revendedor (CSAT) por ER", filtro: "periodo" },
+    ]},
+    { grupo: "Venda Direta", itens: [
+      { id: "venda_direta", nome: "Monitoramento de Base", filtro: "ciclo" },
+    ]},
+    { grupo: "Loja", itens: [
+      { id: "canal_loja", nome: "Canal Loja (IAF de loja)", filtro: "periodo" },
+      { id: "servicos_em_loja", nome: "Serviços em Loja", filtro: "periodo" },
+      { id: "loja_digital", nome: "Loja Digital (TME)", filtro: "periodo" },
+      { id: "id_cliente", nome: "ID Cliente", filtro: "periodo" },
+      { id: "programa_fidelidade", nome: "Programa Fidelidade", filtro: "periodo" },
+    ]},
+    { grupo: "Treinamentos", itens: [
+      { id: "treinamentos_forca_vendas", nome: "Treinamentos IAF, Força de Vendas", filtro: "datafinal" },
+      { id: "treinamentos_iaf_ciclo", nome: "Treinamentos IAF por ciclo", filtro: "nenhum" },
+    ]},
+    { grupo: "Campanhas", itens: [
+      { id: "acao_de_fluxo", nome: "Ação de Fluxo", filtro: "campanha" },
+    ]},
+    { grupo: "Omni e logística", itens: [
+      { id: "pec", nome: "PEC (Envio ER)", filtro: "periodo" },
+      { id: "pl", nome: "Plataforma Logística", filtro: "periodo" },
+    ]},
+  ];
+
+  const ROTULO_FILTRO = {
+    periodo: "usa período (datas)",
+    ciclo: "usa ciclos",
+    datafinal: "usa só a data final (início é sempre 1º de janeiro)",
+    campanha: "usa campanhas",
+    nenhum: "sem filtro: traz todos os ciclos",
+  };
+
+  const ERS_VD = ["13481", "13483", "14523", "18481", "19081", "23332"];
+  const CAMPANHAS_CONHECIDAS = [
+    "Floratta Blue Crystal-Bot", "Botik Peptídeos-Bot", "Cbem Cereja De Fases-Bot",
+    "Cleasing Oil Qdb-Bot", "Egeo Dolce Illusion-Bot", "Her Code Clímax-Bot",
+    "Make B. Salicylic-Bot", "Malbec Black Legend-Bot", "Malbec Edp-Bot",
+    "Nativa Spa Ameixa Intensa-Bot", "Nspa Rosas Secretas Público Selecionado-Bot",
+  ];
+  const PADRAO = ["medallia_nps", "medallia_satisfacao", "venda_direta"];
+
+  const $ = (id) => document.getElementById(id);
+  const todosItens = CATALOGO.flatMap((g) => g.itens);
+
+  function montarLista() {
+    $("grupos").innerHTML = CATALOGO.map((g) => `
+      <div class="grupo">
+        <h3>${g.grupo}</h3>
+        ${g.itens.map((i) => `
+          <label class="item" for="ind-${i.id}">
+            <input type="checkbox" id="ind-${i.id}" value="${i.id}" ${PADRAO.includes(i.id) ? "checked" : ""}>
+            <span class="item-texto">
+              <span class="item-nome">${i.nome}</span>
+              <span class="item-filtro">${ROTULO_FILTRO[i.filtro]}</span>
+            </span>
+          </label>`).join("")}
+      </div>`).join("");
+
+    $("ers").innerHTML = ERS_VD.map((er) =>
+      `<label for="er-${er}"><input type="checkbox" id="er-${er}" value="${er}" checked>${er}</label>`).join("");
+
+    $("camp-chips").innerHTML = CAMPANHAS_CONHECIDAS.map((c, n) =>
+      `<button type="button" class="chip" data-camp="${n}">${c}</button>`).join("");
+  }
+
+  const selecionados = () =>
+    todosItens.filter((i) => $("ind-" + i.id).checked);
+
+  const pad = (n) => String(n).padStart(2, "0");
+  const paraISO = (d) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  function paraBR(iso) {
+    if (!iso) return "";
+    const [a, m, d] = iso.split("-");
+    return `${d}/${m}/${a}`;
+  }
+
+  function aplicarAtalho(nome) {
+    const hoje = new Date();
+    const ano = hoje.getFullYear();
+    const mes = hoje.getMonth();
+    let ini, fim;
+    if (nome === "mes-passado") {
+      ini = new Date(ano, mes - 1, 1);
+      fim = new Date(ano, mes, 0);
+    } else if (nome === "mes-atual") {
+      ini = new Date(ano, mes, 1);
+      fim = hoje;
+    } else if (nome === "ano-ate-mes-passado") {
+      ini = new Date(ano, 0, 1);
+      fim = new Date(ano, mes, 0);
+    } else {
+      ini = new Date(ano, 0, 1);
+      fim = hoje;
+    }
+    $("data-inicio").value = paraISO(ini);
+    $("data-fim").value = paraISO(fim);
+    atualizar();
+  }
+
+  function campanhasEscolhidas() {
+    return $("camp-texto").value
+      .split("\n").map((s) => s.trim()).filter(Boolean);
+  }
+
+  function montarConfig() {
+    const marcados = selecionados();
+    const usa = (f) => marcados.some((i) => i.filtro === f);
+    const erros = [];
+    const avisos = [];
+
+    if (!marcados.length) erros.push("Marque pelo menos um indicador no passo 1.");
+
+    const ini = $("data-inicio").value;
+    const fim = $("data-fim").value;
+    const usaDatas = usa("periodo") || usa("datafinal");
+
+    if (usaDatas && ini && fim && fim < ini) {
+      erros.push("A data final não pode ser anterior à data inicial.");
+    }
+    if (usa("periodo") && ((ini && !fim) || (!ini && fim))) {
+      erros.push("Preencha as duas datas, inicial e final, ou deixe as duas em branco.");
+    }
+    if (usa("datafinal") && !usa("periodo") && !fim) {
+      avisos.push("Sem data final, os Treinamentos usam a data que já vem no site.");
+    }
+    if (usaDatas && !ini && !fim) {
+      avisos.push("Sem datas, cada sistema usa o período padrão dele (em geral, o mês atual).");
+    }
+
+    const ci = $("ciclo-inicio").value.trim();
+    let cf = $("ciclo-fim").value.trim();
+    if (usa("ciclo")) {
+      if (!ci && cf) erros.push("Preencha o ciclo inicial antes do final.");
+      if (ci && cf && Number(cf) < Number(ci)) erros.push("O ciclo final não pode ser menor que o inicial.");
+    }
+
+    let campanhas = "";
+    if (usa("campanha")) {
+      const modo = document.querySelector('input[name="camp-modo"]:checked').value;
+      if (modo === "escolher") {
+        const lista = campanhasEscolhidas();
+        if (!lista.length) erros.push("Escolha pelo menos uma campanha ou volte para \"Todas\".");
+        campanhas = lista.join(";");
+      } else {
+        campanhas = "todas";
+      }
+    }
+
+    let ersVd = "";
+    if (usa("ciclo")) {
+      const ers = ERS_VD.filter((er) => $("er-" + er).checked);
+      if (!ers.length) {
+        avisos.push("Nenhum ER marcado: só a visão geral (GMS) será baixada.");
+        ersVd = "nenhum";
+      } else if (ers.length < ERS_VD.length) {
+        ersVd = ers.join(",");
+      }
+    }
+
+    const config = {
+      versao: 1,
+      gerado_em: new Date().toISOString(),
+      indicadores: marcados.map((i) => i.id),
+      periodo_inicio: usaDatas ? paraBR(ini) : "",
+      periodo_fim: usaDatas ? paraBR(fim) : "",
+      ciclo_inicio: usa("ciclo") ? ci : "",
+      ciclo_fim: usa("ciclo") ? (cf || ci) : "",
+      campanhas,
+      ers_vd: ersVd,
+    };
+
+    return { config, erros, avisos, marcados };
+  }
+
+  function textoResumo({ config, marcados }) {
+    if (!marcados.length) return "Nenhum indicador marcado.";
+    const partes = [`${marcados.length} indicador${marcados.length > 1 ? "es" : ""}`];
+    if (config.periodo_inicio || config.periodo_fim) {
+      const a = config.periodo_inicio || "padrão";
+      const b = config.periodo_fim || "padrão";
+      partes.push(`período ${a} a ${b}`);
+    }
+    if (config.ciclo_inicio) {
+      partes.push(config.ciclo_fim && config.ciclo_fim !== config.ciclo_inicio
+        ? `ciclos ${config.ciclo_inicio} a ${config.ciclo_fim}`
+        : `ciclo ${config.ciclo_inicio}`);
+    }
+    if (config.campanhas) {
+      partes.push(config.campanhas === "todas" ? "todas as campanhas" : `campanhas: ${config.campanhas.split(";").length}`);
+    }
+    return partes.join(" · ");
+  }
+
+  function atualizar() {
+    const marcados = selecionados();
+    const usa = (f) => marcados.some((i) => i.filtro === f);
+
+    $("bloco-periodo").hidden = !(usa("periodo") || usa("datafinal"));
+    $("bloco-ciclo").hidden = !usa("ciclo");
+    $("bloco-campanha").hidden = !usa("campanha");
+    $("sem-filtros").hidden = !(marcados.length && $("bloco-periodo").hidden && $("bloco-ciclo").hidden && $("bloco-campanha").hidden);
+
+    $("dica-periodo").textContent = usa("datafinal") && !usa("periodo")
+      ? "Os Treinamentos usam só a data final; o início é sempre 1º de janeiro. Em branco, usa a data que já vem no site."
+      : usa("datafinal")
+        ? "Os Treinamentos usam só a data final. Em branco, cada sistema usa o período que já vem selecionado nele."
+        : "Em branco, cada sistema usa o período que já vem selecionado nele (em geral, o mês atual).";
+
+    $("camp-escolher").hidden = document.querySelector('input[name="camp-modo"]:checked').value !== "escolher";
+
+    const r = montarConfig();
+    $("resumo").textContent = textoResumo(r);
+    $("avisos").innerHTML =
+      r.erros.map((t) => `<div class="aviso erro" role="alert">${t}</div>`).join("") +
+      r.avisos.map((t) => `<div class="aviso atencao">${t}</div>`).join("");
+    $("baixar").disabled = r.erros.length > 0;
+    $("json-previa").textContent = JSON.stringify(r.config, null, 2);
+  }
+
+  // No Claude usa a capacidade "downloads"; num navegador comum, baixa direto.
+  async function salvarArquivo(nome, blob) {
+    const downloads = await window.claude?.use?.("downloads");
+    if (downloads) {
+      await downloads.save({ filename: nome, data: blob });
+      return;
+    }
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
+
+  async function baixar() {
+    const r = montarConfig();
+    if (r.erros.length) return;
+
+    const status = $("status");
+    const botao = $("baixar");
+    botao.disabled = true;
+    status.textContent = "Montando o pacote...";
+
+    try {
+      const zip = new JSZip();
+      const pasta = zip.folder("hub_automacoes");
+      for (const [nome, b64] of Object.entries(ARQUIVOS)) {
+        pasta.file(nome, b64, { base64: true });
+      }
+      pasta.file("programa/configuracao.json", JSON.stringify(r.config, null, 2));
+
+      const blob = await zip.generateAsync({ type: "blob", compression: "DEFLATE" });
+      const hoje = paraISO(new Date());
+      await salvarArquivo(`hub_automacoes_${hoje}.zip`, blob);
+      status.textContent = "Pacote salvo. Siga os passos de \"Depois de baixar\".";
+    } catch (e) {
+      if (e && e.code === "declined") {
+        status.textContent = "Download cancelado.";
+      } else {
+        status.textContent = "Não foi possível baixar o pacote. Tente de novo.";
+      }
+    } finally {
+      botao.disabled = montarConfig().erros.length > 0;
+    }
+  }
+
+  montarLista();
+  aplicarAtalho("mes-passado");
+
+  document.addEventListener("change", atualizar);
+  document.addEventListener("input", atualizar);
+  $("marcar-todos").addEventListener("click", () => {
+    todosItens.forEach((i) => ($("ind-" + i.id).checked = true));
+    atualizar();
+  });
+  $("limpar-todos").addEventListener("click", () => {
+    todosItens.forEach((i) => ($("ind-" + i.id).checked = false));
+    atualizar();
+  });
+  $("atalhos").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-atalho]");
+    if (b) aplicarAtalho(b.dataset.atalho);
+  });
+  $("camp-chips").addEventListener("click", (e) => {
+    const b = e.target.closest("[data-camp]");
+    if (!b) return;
+    const nome = CAMPANHAS_CONHECIDAS[Number(b.dataset.camp)];
+    if (!campanhasEscolhidas().includes(nome)) {
+      const t = $("camp-texto");
+      t.value = (t.value.trim() ? t.value.trim() + "\n" : "") + nome;
+    }
+    atualizar();
+  });
+  $("baixar").addEventListener("click", baixar);
+
+  atualizar();
+</script>
