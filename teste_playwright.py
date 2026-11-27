@@ -34,15 +34,6 @@ URL_LOJA_DIGITAL = (
     "mfe/gi/digital-store"
 )
 
-URL_TREINAMENTOS_FORCA_VENDAS = (
-    "https://extranet.grupoboticario.com.br/"
-    "mfe/gi/trainings/selling-force"
-)
-
-URL_TREINAMENTOS_IAF_CICLO = (
-    "https://extranet.grupoboticario.com.br/"
-    "mfe/gi/trainings/iaf-cycles"
-)
 
 URL_ID_CLIENTE = (
     "https://extranet.grupoboticario.com.br/"
@@ -75,6 +66,12 @@ PASTA_PROJETO = Path(__file__).resolve().parent
 ARQUIVO_ENV = PASTA_PROJETO / ".env"
 PASTA_PERFIL = PASTA_PROJETO / "perfil_chrome_direto"
 
+# Logins: primeiro o .env local de quem roda (%LOCALAPPDATA%\automacao_gms\.env,
+# o mesmo dos outros scripts), depois o .env desta pasta, se existir.
+load_dotenv(
+    os.environ.get("AUTOMACAO_ENV")
+    or Path(os.environ.get("LOCALAPPDATA") or Path.home()) / "automacao_gms" / ".env"
+)
 load_dotenv(ARQUIVO_ENV)
 
 USUARIO = (
@@ -89,15 +86,12 @@ SENHA = (
     or os.getenv("PASSWORD")
 )
 
-# Usa o OneDrive corporativo do usuário logado (varia por máquina/usuário);
-# cai no caminho antigo se a variável do Windows não existir.
-PASTA_AUTOMACAO_ONEDRIVE = (
-    Path(os.environ["OneDriveCommercial"])
+# Pasta "automacao" do OneDrive. O painel informa em AUTOMACAO_PASTA; sem
+# ele, usa o OneDrive corporativo do usuário logado (varia por máquina).
+PASTA_AUTOMACAO_ONEDRIVE = Path(
+    os.environ.get("AUTOMACAO_PASTA")
+    or Path(os.environ.get("OneDriveCommercial") or Path.home() / "OneDrive - Maria Selma Souza Alves & Cia Ltda")
     / "dashboards" / "Teste Python" / "automacao"
-    if os.environ.get("OneDriveCommercial")
-    else Path(
-        r"C:\Users\Admin\OneDrive - Maria Selma Souza Alves & Cia Ltda\dashboards\Teste Python\automacao"
-    )
 )
 
 # O hub define HUB_SAIDA para gravar tudo numa pasta local da execução.
@@ -1045,56 +1039,6 @@ def baixar_exportacoes_em_lote(
         )
 
 
-def abrir_painel_exportacao_treinamentos(
-    page: Page,
-) -> Locator:
-    botao_exportar = esperar_botao_exportar(page)
-
-    esperar_antes(page)
-    clicar_com_fallback(
-        page,
-        botao_exportar,
-        "Exportar",
-    )
-
-    titulo = page.get_by_text(
-        "Exportar dados",
-        exact=True,
-    ).last
-
-    titulo.wait_for(
-        state="visible",
-        timeout=TIMEOUT_NORMAL,
-    )
-
-    return titulo
-
-
-def marcar_checkbox_treinamentos(page: Page):
-    """
-    O novo mapeamento mostrou que o primeiro checkbox de
-    Treinamentos não possui nome acessível. O painel é inserido
-    no fim do DOM, então o último checkbox é o da exportação.
-    """
-    log("Marcando a seção de Treinamentos...")
-
-    checkbox = page.get_by_role(
-        "checkbox"
-    ).last
-
-    checkbox.wait_for(
-        state="visible",
-        timeout=TIMEOUT_NORMAL,
-    )
-
-    if not checkbox.is_checked():
-        checkbox.check(force=True)
-
-    expect(checkbox).to_be_checked(
-        timeout=TIMEOUT_NORMAL,
-    )
-
-
 def esperar_novo_salvar_dados(
     page: Page,
     quantidade_anterior: int,
@@ -1135,94 +1079,6 @@ def esperar_novo_salvar_dados(
     raise TimeoutError(
         "A nova planilha não ficou pronta no tempo esperado."
     )
-
-
-def baixar_exportacao_treinamentos(
-    page: Page,
-    nome_arquivo: str,
-    pasta_destino: Path = PASTA_DOWNLOADS,
-):
-    abrir_painel_exportacao_treinamentos(page)
-
-    esperar_antes(page)
-    marcar_checkbox_treinamentos(page)
-
-    botao_modal = page.get_by_test_id(
-        "btn-export-modal"
-    )
-
-    botao_modal.wait_for(
-        state="visible",
-        timeout=TIMEOUT_NORMAL,
-    )
-
-    expect(botao_modal).to_be_enabled(
-        timeout=TIMEOUT_NORMAL,
-    )
-
-    quantidade_anterior = page.get_by_text(
-        "Salvar dados",
-        exact=True,
-    ).count()
-
-    esperar_antes(page)
-
-    log("Solicitando a geração da planilha...")
-    botao_modal.click()
-
-    botao_salvar = esperar_novo_salvar_dados(
-        page,
-        quantidade_anterior,
-    )
-
-    esperar_antes(page)
-
-    log(f"Baixando: {nome_arquivo}")
-
-    with page.expect_download(
-        timeout=TIMEOUT_RELATORIO,
-    ) as download_info:
-        botao_salvar.click()
-
-    salvar_download(
-        download_info.value,
-        nome_arquivo,
-        pasta_destino,
-    )
-
-
-def fechar_painel_exportacao_treinamentos(
-    page: Page,
-):
-    log("Fechando o painel Exportar dados...")
-
-    titulo = page.get_by_text(
-        "Exportar dados",
-        exact=True,
-    ).last
-
-    if titulo.count() == 0:
-        return
-
-    try:
-        botao_fechar = page.locator(
-            ".ant-drawer-close"
-        ).last
-
-        if botao_fechar.count() > 0:
-            esperar_antes(page, 2_000)
-            botao_fechar.click()
-        else:
-            page.keyboard.press("Escape")
-
-        titulo.wait_for(
-            state="hidden",
-            timeout=20_000,
-        )
-
-    except PlaywrightTimeoutError:
-        page.keyboard.press("Escape")
-        page.wait_for_timeout(2_000)
 
 
 def clicar_filtro_por_texto(
@@ -1380,81 +1236,6 @@ def baixar_loja_digital(page: Page):
     )
 
     log("Loja Digital concluído.")
-
-
-# ============================================================
-# 3 — TREINAMENTOS IAF / FORÇA DE VENDAS
-# ============================================================
-
-def baixar_treinamentos_forca_vendas(page: Page):
-    log(
-        "========== 3. TREINAMENTOS IAF "
-        "FORÇA DE VENDAS =========="
-    )
-
-    abrir_area_direta(
-        page,
-        "Treinamentos",
-        URL_TREINAMENTOS_FORCA_VENDAS,
-    )
-
-    pasta_destino = preparar_data_final_treinamentos(page)
-
-    botao_pdv = page.get_by_role(
-        "button",
-        name="PDV",
-        exact=True,
-    )
-
-    botao_pdv.wait_for(
-        state="visible",
-        timeout=TIMEOUT_TREINAMENTOS,
-    )
-
-    esperar_antes(page)
-
-    log("Selecionando a visão PDV...")
-    botao_pdv.click()
-
-    page.wait_for_timeout(
-        ESPERA_DASHBOARD
-    )
-
-    baixar_exportacao_treinamentos(
-        page,
-        "TreinamentosIAFForcaVendasPDV",
-        pasta_destino,
-    )
-
-    fechar_painel_exportacao_treinamentos(page)
-
-    log("Treinamentos IAF Força de Vendas concluído.")
-
-
-# ============================================================
-# 4 — TREINAMENTOS IAF POR CICLO
-# ============================================================
-
-def baixar_treinamentos_iaf_ciclo(page: Page):
-    log(
-        "========== 4. TREINAMENTOS IAF "
-        "POR CICLO =========="
-    )
-
-    abrir_area_direta(
-        page,
-        "Treinamentos IAF por ciclo",
-        URL_TREINAMENTOS_IAF_CICLO,
-    )
-
-    baixar_exportacao_treinamentos(
-        page,
-        "TreinamentosIAFPorCiclo",
-    )
-
-    fechar_painel_exportacao_treinamentos(page)
-
-    log("Treinamentos IAF por ciclo concluído.")
 
 
 # ============================================================
@@ -1959,54 +1740,6 @@ def pasta_destino_periodo(periodo) -> Path:
     return pasta
 
 
-def preparar_data_final_treinamentos(page: Page) -> Path:
-    """Treinamentos tem só 'Data de conclusão até:' (o início é sempre o
-    começo do ano). Usa PERIODO_FIM; sem ele, mantém a data padrão."""
-    texto_fim = os.getenv("PERIODO_FIM", "").strip()
-
-    if not texto_fim:
-        log("PERIODO_FIM não definido: mantendo a data padrão.")
-        return PASTA_DOWNLOADS
-
-    fim = datetime.strptime(texto_fim, "%d/%m/%Y")
-
-    pasta = (
-        PASTA_DOWNLOADS.parent
-        / "dados_brutos periodos"
-        / f"treinamentos_ate_{fim:%Y-%m-%d}"
-    )
-    pasta.mkdir(parents=True, exist_ok=True)
-    log(f"Pasta de destino: {pasta}")
-    log(f"Selecionando data de conclusão até: {fim:%d/%m/%Y}")
-
-    campo = page.get_by_text(
-        "Data de conclusão até:",
-        exact=True,
-    ).first
-    campo.wait_for(state="visible", timeout=TIMEOUT_NORMAL)
-
-    esperar_antes(page)
-    campo.click()
-
-    page.locator(".rdrMonthPicker select").wait_for(
-        state="visible",
-        timeout=TIMEOUT_NORMAL,
-    )
-
-    clicar_dia_calendario(page, fim)
-
-    agora_nao = page.get_by_role("button", name="Agora não")
-    try:
-        agora_nao.first.wait_for(state="visible", timeout=8_000)
-        agora_nao.first.click()
-    except PlaywrightTimeoutError:
-        pass
-
-    page.wait_for_timeout(ESPERA_DASHBOARD)
-
-    return pasta
-
-
 def preparar_periodo(page: Page) -> Path:
     """Aplica PERIODO_INICIO/PERIODO_FIM (se definidos) e devolve a pasta
     de destino. Deve rodar depois de limpar_filtros(), que volta o
@@ -2333,49 +2066,105 @@ def baixar_venda_direta_monitoramento_base(page: Page):
             er.strip() for er in filtro_ers.split(",") if er.strip()
         ]
 
+    ers_com_falha = []
+
     for codigo_er in ers_processar:
-        try:
-            # 'Unidade de negócio' é multisseleção: acumula ERs se
-            # não limpar antes de marcar o próximo.
-            limpar_filtros(page)
-            selecionar_ciclos_venda_direta(page)
-            selecionar_pdv_venda_direta(page, codigo_er)
-
-            log(f"Exportando ER {codigo_er}...")
-            baixar_exportacoes_em_lote(
-                page,
-                RELATORIOS_MONITORAMENTO_BASE,
-                pasta_destino,
-            )
-
-            fechar_modal_exportacao(page)
-
-        except Exception as erro:
-            # Um ER com problema não deve derrubar os outros 5.
-            log(f"Falha ao processar o ER {codigo_er}.")
-            log(f"Tipo: {type(erro).__name__}")
-            log(f"Detalhes: {erro}")
-
-            captura = (
-                PASTA_PROJETO
-                / f"erro_venda_direta_{codigo_er}.png"
-            )
-
+        for tentativa in (1, 2):
             try:
-                page.screenshot(
-                    path=str(captura),
-                    full_page=True,
+                fechar_pesquisa_opiniao(page)
+
+                # 'Unidade de negócio' é multisseleção: acumula ERs se
+                # não limpar antes de marcar o próximo.
+                limpar_filtros(page)
+                selecionar_ciclos_venda_direta(page)
+                selecionar_pdv_venda_direta(page, codigo_er)
+
+                log(f"Exportando ER {codigo_er}...")
+                baixar_exportacoes_em_lote(
+                    page,
+                    RELATORIOS_MONITORAMENTO_BASE,
+                    pasta_destino,
                 )
-                log(f"Captura salva em: {captura}")
 
-            except Exception:
-                pass
+                fechar_modal_exportacao(page)
+                break
 
-            # Tenta recuperar o estado da página para não travar
-            # os ERs seguintes.
-            fechar_modal_exportacao(page)
+            except Exception as erro:
+                log(
+                    f"Falha ao processar o ER {codigo_er} "
+                    f"(tentativa {tentativa} de 2)."
+                )
+                log(f"Tipo: {type(erro).__name__}")
+                log(f"Detalhes: {erro}")
+
+                captura = (
+                    PASTA_PROJETO
+                    / f"erro_venda_direta_{codigo_er}.png"
+                )
+
+                try:
+                    page.screenshot(
+                        path=str(captura),
+                        full_page=True,
+                    )
+                    log(f"Captura salva em: {captura}")
+
+                except Exception:
+                    pass
+
+                fechar_modal_exportacao(page)
+
+                if tentativa == 1:
+                    log("Recarregando a área para tentar de novo...")
+                    abrir_area_direta(
+                        page,
+                        "Venda Direta - Monitoramento de Base",
+                        URL_MONITORAMENTO_BASE_VD,
+                    )
+                else:
+                    ers_com_falha.append(codigo_er)
+
+    # Os outros ERs continuam sendo baixados, mas a etapa termina com erro:
+    # a VD consolidada sem um ER não pode seguir para o Hubbia.
+    if ers_com_falha:
+        raise RuntimeError(
+            "ERs sem exportação depois de 2 tentativas: "
+            + ", ".join(ers_com_falha)
+        )
 
     log("Venda Direta - Monitoramento de Base concluído.")
+
+
+def fechar_pesquisa_opiniao(page: Page):
+    """Fecha a pesquisa 'Cansado de cruzar dados de VD no Excel?' (surgiu
+    em 14/10/2026). Ela cobre a tela e desviou o clique na Unidade de
+    negócio: o ER 13483 ficou sem filtro e o Exportar desabilitado."""
+    try:
+        titulo = page.get_by_text(
+            "Cansado de cruzar dados",
+            exact=False,
+        ).first
+
+        if titulo.count() == 0 or not titulo.is_visible():
+            return
+
+        log("Pesquisa de opinião na tela. Fechando...")
+
+        cartao = titulo.locator("xpath=ancestor::*[.//button][1]")
+        fechar = cartao.locator("button").filter(
+            has_not_text="Dar minha opinião"
+        )
+
+        if fechar.count() > 0:
+            fechar.first.click(timeout=5_000)
+        else:
+            page.keyboard.press("Escape")
+
+        page.wait_for_timeout(1_000)
+
+    except Exception:
+        # Melhor esforço: se não fechar, a nova tentativa do ER ainda roda.
+        pass
 
 
 # ============================================================
@@ -2393,8 +2182,6 @@ def executar_etapas(page: Page) -> str:
         mapa_etapas = {
             "servicos_em_loja": baixar_servicos_em_loja,
             "loja_digital": baixar_loja_digital,
-            "treinamentos_forca_vendas": baixar_treinamentos_forca_vendas,
-            "treinamentos_iaf_ciclo": baixar_treinamentos_iaf_ciclo,
             "id_cliente": baixar_id_cliente,
             "acao_de_fluxo": baixar_acao_de_fluxo,
             "programa_fidelidade": baixar_programa_fidelidade,
@@ -2469,17 +2256,6 @@ def executar_etapas(page: Page) -> str:
         baixar_acao_de_fluxo(page)
         return "acao_de_fluxo"
 
-    if ETAPA_AUTOMACAO in {
-        "treinamentos",
-        "treinamentos_forca_vendas",
-    }:
-        log(
-            "MODO DE TESTE: executando somente Treinamentos "
-            "IAF Força de Vendas."
-        )
-        baixar_treinamentos_forca_vendas(page)
-        return "treinamentos_forca_vendas"
-
     somente_canal_loja = ETAPA_AUTOMACAO in {
         "canal_loja",
         "canal-loja",
@@ -2519,8 +2295,6 @@ def executar_etapas(page: Page) -> str:
 
     baixar_servicos_em_loja(page)
     baixar_loja_digital(page)
-    baixar_treinamentos_forca_vendas(page)
-    baixar_treinamentos_iaf_ciclo(page)
     baixar_id_cliente(page)
     baixar_acao_de_fluxo(page)
     baixar_programa_fidelidade(page)
